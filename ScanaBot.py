@@ -1,14 +1,21 @@
 import socket
+import random
  
 servidor = "localhost"
 canal = "#canal"
-nickName = "Bot"
+nickName = ""
 puerto = 6667
+def name_generator():
+	cad= "abcdefghijklmnopqrstuvwxyz1234567890"
+	lenght= random.randint(4,10)
+	name=[]
+	name+=[cad[random.randint(0,len(cad))] for i in range(0,lenght)]
+	return "".join(name)
 
 def send_msg(canal , msg):
       irc.send("PRIVMSG "+ canal +" :"+ msg +"\n\r") 
       
-def  obtener_nick(canal, ircmsg):
+def  get_nick(canal, ircmsg):
       if ircmsg.find("PRIVMSG "+canal) != -1:
             nick = ircmsg.split('!', 1 )
             nick = nick[0].replace(":", "",1)
@@ -22,8 +29,9 @@ def get_msg(canal, ircmsg):
  
 #Modo Verboso para chat
 def v_chat(ircmsg, canal):
-      print (obtener_nick(canal, ircmsg)+": "+get_msg(canal, ircmsg))
+      print (get_nick(canal, ircmsg)+": "+get_msg(canal, ircmsg))
       
+nickName=name_generator()
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 irc.connect((servidor, puerto))
 irc.send("USER "+ nickName +" "+ nickName +" "+ nickName +" :r\n\r")
