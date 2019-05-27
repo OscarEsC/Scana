@@ -24,6 +24,10 @@ isAuth = False
 rsa_str = '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDOsK/43W2J7yz+wrCj0iRtpfA40b6G5JVqEsfkrDrI84nKxJylc4+FelPKobnpHhWpmVX2UZFxeSEzfiUPaDZHRr+PtoyvAKoI9u9AGgXKdk811Ti84y5JsavCjsyOjHzBIvXTunwLNbGVP2P2X+KVULjC9tWe7bSMIC52XxzpIQIDAQAB\n-----END PUBLIC KEY-----'
 rsa = RSA.importKey(rsa_str)
 
+'''
+Función creada por: Manzano Cruz Isaías Abraham
+                    Rodríguez Gallardo Pedro Alejandro 
+'''
 def Cifra(key, fnamec):
 	"""
 	Recibe: La llave para cifrar el archivo y el nombre del archivo
@@ -53,7 +57,10 @@ def Cifra(key, fnamec):
 					chunk+=' '*(16-(len(chunk)%16))
 				outfile.write(encryptor.encrypt(chunk))
 
-
+'''
+Función creada por: Manzano Cruz Isaías Abraham
+                    Rodríguez Gallardo Pedro Alejandro 
+'''
 def CreaLlave(key):
     """
     Recibe: Un texto plano que servira ser una llave
@@ -64,6 +71,10 @@ def CreaLlave(key):
     hasher=SHA256.new(k)
     return hasher.hexdigest()[:16]
 
+'''
+Función creada por: Manzano Cruz Isaías Abraham
+                    Rodríguez Gallardo Pedro Alejandro 
+'''
 def CifraLlave(llave):
 	return rsa.encrypt(llave,32)
 
